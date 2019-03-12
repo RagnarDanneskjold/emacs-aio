@@ -273,6 +273,18 @@ next chunk of output."
           (setf (process-filter process) callback
                 (process-get process :aio-filter) promise))))))
 
+(defun aio-make-thread (function &optional name)
+  "Like `make-thread', but FUNCTION's return value is delivered by promise.
+
+Returns a cons of (promise . thread). Calling `aio-await' on the
+returned promise is analogous to using `thread-join'."
+  (let* ((promise (aio-promise))
+         (wrapper (lambda ()
+                    (aio-with-promise promise
+                      (funcall function))))
+         (thread (make-thread wrapper name)))
+    (cons promise thread)))
+
 (provide 'aio)
 
 ;;; aio.el ends here
